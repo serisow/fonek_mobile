@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../domain/providers.dart';
-import 'otp_verification_screen.dart';
 
-// [CORRECTION] It must be a ConsumerStatefulWidget to manage its own state (controller, loading).
+// It must be a ConsumerStatefulWidget to manage its own state (controller, loading).
 class PhoneAuthScreen extends ConsumerStatefulWidget {
   const PhoneAuthScreen({super.key});
 
@@ -31,18 +30,10 @@ class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
 
     try {
       final authRepo = ref.read(authRepositoryProvider);
-      // The full phone number is now correctly constructed.
       final fullPhoneNumber = '$_phonePrefix${_phoneController.text.trim()}';
-
       await authRepo.requestOtp(fullPhoneNumber);
+      ref.read(authControllerProvider.notifier).setPhoneNumberForVerification(fullPhoneNumber);
 
-      if (!mounted) return;
-
-      Navigator.of(context).push(
-        MaterialPageRoute(
-          builder: (context) => OtpVerificationScreen(phoneNumber: fullPhoneNumber),
-        ),
-      );
     } catch (e) {
       debugPrint("Error requesting OTP: $e");
       // TODO: Show user-facing error message.

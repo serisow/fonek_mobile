@@ -1,19 +1,28 @@
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+
 import '../../data/models/user.dart';
 import '../../data/repositories/auth_repository.dart';
 import '../../data/repositories/secure_storage_repository.dart';
 
 // State Tablet for our authentication state.
-enum AuthStatus { authenticated, unauthenticated, loading, initial }
+enum AuthStatus { authenticated, unauthenticated, loading, initial, error, awaitingOtp } 
 
 class AuthState {
   final AuthStatus status;
   final User? user;
+  final String? errorMessage;
+  final String? phoneNumberForVerification;
 
-  AuthState({required this.status, this.user});
+  // [CORRECTION] Add the new field to the constructor.
+  AuthState({
+    required this.status,
+    this.user,
+    this.errorMessage,
+    this.phoneNumberForVerification,
+  });
 }
 
-// The AuthController: our "Decider" Artisan.
+
 class AuthController extends StateNotifier<AuthState> {
   final AuthRepository _authRepo;
   final SecureStorageRepository _storageRepo;
@@ -29,10 +38,12 @@ class AuthController extends StateNotifier<AuthState> {
       await _storageRepo.saveToken(result.token);
       state = AuthState(status: AuthStatus.authenticated, user: result.user);
     } catch (e) {
-      state = AuthState(status: AuthStatus.unauthenticated);
+      state = AuthState(status: AuthStatus.error, errorMessage: e.toString());
+      Future.delayed(const Duration(milliseconds: 100), () {
+        state = AuthState(status: AuthStatus.unauthenticated);
+      });
     }
   }
-
   // Orchestration method to check if a user is already logged in.
   Future<void> checkAuthStatus() async {
     final token = await _storageRepo.readToken();
@@ -49,5 +60,9 @@ class AuthController extends StateNotifier<AuthState> {
   Future<void> signOut() async {
     await _storageRepo.deleteToken();
     state = AuthState(status: AuthStatus.unauthenticated);
+  }
+
+  void setPhoneNumberForVerification(String phoneNumber) {
+    state = AuthState(status: AuthStatus.awaitingOtp, phoneNumberForVerification: phoneNumber);
   }
 }

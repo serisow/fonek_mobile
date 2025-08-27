@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
-
 import '../../domain/controllers/auth_controller.dart';
 import '../../domain/providers.dart';
 import 'home_screen.dart';
 import 'phone_auth_screen.dart';
+import 'otp_verification_screen.dart'; 
 
 // This widget acts as a gatekeeper for the entire application.
 // Its sole purpose is to observe the authentication state and display
@@ -43,10 +43,14 @@ class _AuthWidgetState extends ConsumerState<AuthWidget> {
       case AuthStatus.authenticated:
         return const HomeScreen();
       case AuthStatus.unauthenticated:
+      case AuthStatus.error: 
         return const PhoneAuthScreen();
+      case AuthStatus.awaitingOtp:
+        return OtpVerificationScreen(
+          phoneNumber: authState.phoneNumberForVerification!,
+        );
       case AuthStatus.loading:
       case AuthStatus.initial:
-        // Show a loading spinner while the Decider is working.
         return const Scaffold(
           body: Center(child: CircularProgressIndicator()),
         );

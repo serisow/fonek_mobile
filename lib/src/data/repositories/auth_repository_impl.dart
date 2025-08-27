@@ -22,13 +22,11 @@ Future<void> requestOtp(String phoneNumber) async {
     );
 
     if (response.statusCode != 202) {
-      // [AMÉLIORATION] Fournir un rapport d'erreur beaucoup plus détaillé.
       throw Exception('Failed to request OTP. Status: ${response.statusCode}, Body: ${response.body}');
     }
   } catch (e) {
-      // [CORRECTION] Use debugPrint for development-only logging.
       debugPrint("AuthRepositoryImpl Error: $e");
-    rethrow; // Renvoyer l'erreur pour que la couche UI puisse la gérer.
+    rethrow;
   }
 }
 

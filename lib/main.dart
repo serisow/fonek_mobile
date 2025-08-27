@@ -2,13 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
-// [CORRECTION] We no longer import repositories or controllers here.
 import 'src/presentation/screens/auth_widget.dart';
 
 Future<void> main() async {
   await dotenv.load(fileName: ".env");
 
-  // [MODIFICATION] Le ProviderScope est le widget qui rend les providers disponibles.
+  // The ProviderScope is the widget which make providers available.
   runApp(const ProviderScope(child: MyApp())); 
 }
 
@@ -23,7 +22,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.blue,
         visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
-      // [MODIFICATION] AuthWidget devient notre point d'entrée.
+      // AuthWidget: the entrypoint
       home: const AuthWidget(), 
     );
   }
