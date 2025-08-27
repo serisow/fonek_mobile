@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/auth_repository.dart';
-// Note: We will create home_screen.dart in the next step.
-// For now, this import will show an error, which is normal.
-import 'home_screen.dart'; 
+import '../../domain/controllers/auth_controller.dart';
+import '../../domain/providers.dart';
 
-class OtpVerificationScreen extends StatefulWidget {
+// This screen is also a "dumb" UI Liaison Agent.
+// It translates the user's OTP input and button press into a single
+// command for our Decider (AuthController).
+class OtpVerificationScreen extends ConsumerWidget {
   final String phoneNumber;
 
   const OtpVerificationScreen({
@@ -15,57 +16,12 @@ class OtpVerificationScreen extends StatefulWidget {
   });
 
   @override
-  State<OtpVerificationScreen> createState() => _OtpVerificationScreenState();
-}
+  Widget build(BuildContext context, WidgetRef ref) {
+    final otpController = TextEditingController();
+    
+    // We observe the AuthController state to know when to show a loading indicator.
+    final authState = ref.watch(authControllerProvider);
 
-class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
-  final _otpController = TextEditingController();
-  bool _isLoading = false;
-
-  // UI Artisan to command the verification.
-  Future<void> _verifyOtp() async {
-    if (_otpController.text.length != 6) {
-      print("OTP must be 6 digits.");
-      // In a real app, show a snackbar.
-      return;
-    }
-
-    setState(() {
-      _isLoading = true;
-    });
-
-    try {
-      final authRepo = context.read<AuthRepository>();
-      
-      // Command the Liaison Agent.
-      final result = await authRepo.verifyOtp(widget.phoneNumber, _otpController.text.trim());
-
-      // TODO: Save the JWT token securely using the SecureStorageService.
-
-      print("OTP verification successful for user: ${result.user.nickname}");
-
-      // On success, navigate to the main screen of the app.
-      // We use pushAndRemoveUntil to clear the auth screens from the stack.
-      if (mounted) {
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (Route<dynamic> route) => false,
-        );
-      }
-
-    } catch (e) {
-      print("Error verifying OTP: $e");
-    } finally {
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-    }
-  }
-
-  @override
-  Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Verify Your Code'),
@@ -74,34 +30,48 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
-            Text('Enter the 6-digit code sent to ${widget.phoneNumber}'),
+            Text(
+              'Enter the 6-digit code sent to $phoneNumber',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.titleMedium,
+            ),
             const SizedBox(height: 20),
             TextField(
-              controller: _otpController,
+              controller: otpController,
               decoration: const InputDecoration(
                 labelText: 'OTP Code',
+                border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.number,
               maxLength: 6,
               textAlign: TextAlign.center,
+              style: const TextStyle(fontSize: 24, letterSpacing: 12),
             ),
             const SizedBox(height: 20),
-            _isLoading
-                ? const CircularProgressIndicator()
+            authState.status == AuthStatus.loading
+                ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(
-                    onPressed: _verifyOtp,
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
+                    onPressed: () {
+                      // The UI gives a simple, clean command to the Decider.
+                      // The Decider will handle all the complex orchestration:
+                      // - calling the repository
+                      // - saving the token
+                      // - updating the global authentication state
+                      ref.read(authControllerProvider.notifier).verifyOtp(
+                            phoneNumber,
+                            otpController.text.trim(),
+                          );
+                    },
                     child: const Text('Verify'),
                   ),
           ],
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    _otpController.dispose();
-    super.dispose();
   }
 }

@@ -38,6 +38,8 @@ dependencies:
   # La commande 'flutter pub add provider' a ajouté celle-ci.
   provider: ^6.1.2 
   flutter_dotenv: ^6.0.0
+  flutter_riverpod: ^2.6.1
+  flutter_secure_storage: ^9.2.4
 
 dev_dependencies:
   flutter_test:

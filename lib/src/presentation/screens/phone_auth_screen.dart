@@ -1,27 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../data/repositories/auth_repository.dart';
-import 'otp_verification_screen.dart'; 
+import '../../domain/providers.dart';
+import 'otp_verification_screen.dart';
 
-class PhoneAuthScreen extends StatefulWidget {
+// [CORRECTION] It must be a ConsumerStatefulWidget to manage its own state (controller, loading).
+class PhoneAuthScreen extends ConsumerStatefulWidget {
   const PhoneAuthScreen({super.key});
 
   @override
-  State<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
+  ConsumerState<PhoneAuthScreen> createState() => _PhoneAuthScreenState();
 }
 
-class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
-  // Local state for the UI: controller for the text field and loading state.
+class _PhoneAuthScreenState extends ConsumerState<PhoneAuthScreen> {
+  // The controller is now part of the State, so it persists across rebuilds.
   final _phoneController = TextEditingController();
   bool _isLoading = false;
-  // Storing the prefix as a constant for clarity and reusability.
   static const String _phonePrefix = '+33';
 
-  // This method is a "UI Artisan". Its job is to command the Decider.
   Future<void> _requestOtp() async {
-    if (_phoneController.text.isEmpty) {
-      print("Phone number is empty");
+    if (_phoneController.text.trim().isEmpty) {
+      // In a real app, show a snackbar for user feedback.
+      debugPrint("Phone number is empty");
       return;
     }
 
@@ -30,25 +30,22 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
     });
 
     try {
-      final authRepo = context.read<AuthRepository>();
-      final String fullPhoneNumber = '$_phonePrefix${_phoneController.text.trim()}';
-      
+      final authRepo = ref.read(authRepositoryProvider);
+      // The full phone number is now correctly constructed.
+      final fullPhoneNumber = '$_phonePrefix${_phoneController.text.trim()}';
+
       await authRepo.requestOtp(fullPhoneNumber);
 
-      print("OTP requested successfully! Navigating to OTP screen.");
+      if (!mounted) return;
 
-      // [MODIFICATION] On success, navigate to the OTP screen,
-      // passing the full phone number as a parameter.
-      if (mounted) {
-        Navigator.of(context).push(
-          MaterialPageRoute(
-            builder: (context) => OtpVerificationScreen(phoneNumber: fullPhoneNumber),
-          ),
-        );
-      }
-
-    }  catch (e) {
-      print("Error requesting OTP: $e");
+      Navigator.of(context).push(
+        MaterialPageRoute(
+          builder: (context) => OtpVerificationScreen(phoneNumber: fullPhoneNumber),
+        ),
+      );
+    } catch (e) {
+      debugPrint("Error requesting OTP: $e");
+      // TODO: Show user-facing error message.
     } finally {
       if (mounted) {
         setState(() {
@@ -56,6 +53,13 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         });
       }
     }
+  }
+
+  @override
+  void dispose() {
+    // It's crucial to dispose of the controller.
+    _phoneController.dispose();
+    super.dispose();
   }
 
   @override
@@ -68,22 +72,25 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
+          crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             TextField(
               controller: _phoneController,
               decoration: const InputDecoration(
                 labelText: 'Phone Number',
-                // The prefix text is for display purposes only.
-                prefixText: '$_phonePrefix ', 
+                prefixText: '$_phonePrefix ',
+                border: OutlineInputBorder(),
               ),
               keyboardType: TextInputType.phone,
-              // Optional: improve UX by automatically moving cursor
-              autofocus: true, 
+              autofocus: true,
             ),
             const SizedBox(height: 20),
             _isLoading
-                ? const CircularProgressIndicator()
+                ? const Center(child: CircularProgressIndicator())
                 : ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      padding: const EdgeInsets.symmetric(vertical: 16),
+                    ),
                     onPressed: _requestOtp,
                     child: const Text('Continue'),
                   ),
@@ -91,12 +98,5 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
         ),
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    // Clean up the controller when the widget is removed.
-    _phoneController.dispose();
-    super.dispose();
   }
 }

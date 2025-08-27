@@ -1,4 +1,7 @@
 import 'dart:convert';
+import 'package:flutter/foundation.dart';
+
+
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
@@ -23,8 +26,8 @@ Future<void> requestOtp(String phoneNumber) async {
       throw Exception('Failed to request OTP. Status: ${response.statusCode}, Body: ${response.body}');
     }
   } catch (e) {
-    // [AMÉLIORATION] Journaliser l'erreur originale pour le débogage.
-    print("AuthRepositoryImpl Error: $e");
+      // [CORRECTION] Use debugPrint for development-only logging.
+      debugPrint("AuthRepositoryImpl Error: $e");
     rethrow; // Renvoyer l'erreur pour que la couche UI puisse la gérer.
   }
 }
