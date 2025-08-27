@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
 import '../../data/repositories/auth_repository.dart';
+import 'otp_verification_screen.dart'; 
 
 class PhoneAuthScreen extends StatefulWidget {
   const PhoneAuthScreen({super.key});
@@ -30,18 +31,23 @@ class _PhoneAuthScreenState extends State<PhoneAuthScreen> {
 
     try {
       final authRepo = context.read<AuthRepository>();
-
-      // [CORRECTION] Assemble the full phone number before sending.
-      // This is the core translation logic.
       final String fullPhoneNumber = '$_phonePrefix${_phoneController.text.trim()}';
       
-      print("Attempting to request OTP for: $fullPhoneNumber"); // Good for debugging.
-
       await authRepo.requestOtp(fullPhoneNumber);
 
-      print("OTP requested successfully! Navigate to OTP screen.");
+      print("OTP requested successfully! Navigating to OTP screen.");
 
-    } catch (e) {
+      // [MODIFICATION] On success, navigate to the OTP screen,
+      // passing the full phone number as a parameter.
+      if (mounted) {
+        Navigator.of(context).push(
+          MaterialPageRoute(
+            builder: (context) => OtpVerificationScreen(phoneNumber: fullPhoneNumber),
+          ),
+        );
+      }
+
+    }  catch (e) {
       print("Error requesting OTP: $e");
     } finally {
       if (mounted) {
