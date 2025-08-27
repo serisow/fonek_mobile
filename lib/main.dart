@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'src/data/repositories/auth_repository.dart';
 import 'src/data/repositories/auth_repository_impl.dart';
 
-void main() {
+Future<void> main() async {
+  await dotenv.load(fileName: ".env");
+
   runApp(
     // The "Grand Assembler" for our Liaison Agents.
     // We fabricate our agents and make them available
@@ -21,6 +24,7 @@ void main() {
     ),
   );
 }
+
 
 class MyApp extends StatelessWidget {
   const MyApp({super.key});

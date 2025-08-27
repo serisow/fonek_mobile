@@ -1,4 +1,5 @@
 import 'dart:convert';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 import 'package:http/http.dart' as http;
 
 import '../models/user.dart';
@@ -6,8 +7,8 @@ import 'auth_repository.dart';
 
 // The concrete implementation of our Liaison Agent.
 class AuthRepositoryImpl implements AuthRepository {
-  final String _baseUrl = "http://www.fonek-dev.com/api/v1";
-
+  // '!' means we are certain API_BASE_URL is provided in the .env file.
+  final String _baseUrl = dotenv.env['API_BASE_URL']!;
   @override
   Future<void> requestOtp(String phoneNumber) async {
     final response = await http.post(
