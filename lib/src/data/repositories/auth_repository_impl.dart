@@ -9,8 +9,9 @@ import 'auth_repository.dart';
 class AuthRepositoryImpl implements AuthRepository {
   // '!' means we are certain API_BASE_URL is provided in the .env file.
   final String _baseUrl = dotenv.env['API_BASE_URL']!;
-  @override
-  Future<void> requestOtp(String phoneNumber) async {
+@override
+Future<void> requestOtp(String phoneNumber) async {
+  try {
     final response = await http.post(
       Uri.parse('$_baseUrl/auth/otp/request'),
       headers: {'Content-Type': 'application/json'},
@@ -18,10 +19,15 @@ class AuthRepositoryImpl implements AuthRepository {
     );
 
     if (response.statusCode != 202) {
-      // Simple error handling to start with.
-      throw Exception('Failed to request OTP');
+      // [AMÉLIORATION] Fournir un rapport d'erreur beaucoup plus détaillé.
+      throw Exception('Failed to request OTP. Status: ${response.statusCode}, Body: ${response.body}');
     }
+  } catch (e) {
+    // [AMÉLIORATION] Journaliser l'erreur originale pour le débogage.
+    print("AuthRepositoryImpl Error: $e");
+    rethrow; // Renvoyer l'erreur pour que la couche UI puisse la gérer.
   }
+}
 
   @override
   Future<({User user, String token})> verifyOtp(String phoneNumber, String otp) async {

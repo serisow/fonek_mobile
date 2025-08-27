@@ -4,17 +4,19 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 import 'src/data/repositories/auth_repository.dart';
 import 'src/data/repositories/auth_repository_impl.dart';
+import 'src/presentation/screens/phone_auth_screen.dart'; // Import our new screen
 
+// main() must be async to wait for dotenv to load.
 Future<void> main() async {
+  // Load environment variables before running the app.
   await dotenv.load(fileName: ".env");
 
   runApp(
-    // The "Grand Assembler" for our Liaison Agents.
-    // We fabricate our agents and make them available
-    // to the entire application via Provider.
+    // The "Grand Assembler" must use MultiProvider
+    // to be able to provide all our future dependencies.
     MultiProvider(
       providers: [
-        // Ici, nous fabriquons et fournissons notre premier Agent de Liaison.
+        // Here, we fabricate and provide our first Liaison Agent.
         Provider<AuthRepository>(
           create: (_) => AuthRepositoryImpl(),
         ),
@@ -25,7 +27,6 @@ Future<void> main() async {
   );
 }
 
-
 class MyApp extends StatelessWidget {
   const MyApp({super.key});
 
@@ -33,14 +34,12 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       title: 'Fonek',
-      home: Scaffold(
-        appBar: AppBar(
-          title: const Text('Fonek MVP - Data Layer Test'),
-        ),
-        body: const Center(
-          child: Text('Foundation is laid. Ready to build the UI.'),
-        ),
+      theme: ThemeData(
+        primarySwatch: Colors.blue,
+        visualDensity: VisualDensity.adaptivePlatformDensity,
       ),
+      // The home screen is now our authentication screen.
+      home: const PhoneAuthScreen(),
     );
   }
 }
