@@ -1,3 +1,6 @@
+# My thing to ignore
+fonek-docs/
+todo.md
 # Miscellaneous
 .env
 *.class
